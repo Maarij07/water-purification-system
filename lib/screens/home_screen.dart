@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../widgets/common_app_bar.dart';
 import '../widgets/common_drawer.dart';
+import 'device_info_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -87,224 +88,234 @@ class _DeviceCardState extends State<DeviceCard> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DeviceInfoScreen(device: widget.device),
           ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header with device name and menu
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Column(
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header with device name and menu
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.device.name,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF14103B),
+                            fontFamily: 'Inter',
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: BoxDecoration(
+                                color: widget.device.statusColor,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              widget.device.status,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF666666),
+                                fontFamily: 'Inter',
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: BoxDecoration(
+                                color: widget.device.healthColor,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              widget.device.healthStatus,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: widget.device.healthColor,
+                                fontFamily: 'Inter',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      _showDeviceOptions(context, widget.device);
+                    },
+                    child: const Icon(Icons.more_vert,
+                        color: Color(0xFFCCCCCC), size: 20),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              const Divider(height: 1, color: Color(0xFFEEEEEE)),
+              const SizedBox(height: 12),
+              // Pump control
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        widget.device.name,
+                        pumpOn ? 'Turn ON the pump' : 'Turn OFF the pump',
                         style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
                           color: Color(0xFF14103B),
                           fontFamily: 'Inter',
                         ),
                       ),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          Container(
-                            width: 6,
-                            height: 6,
-                            decoration: BoxDecoration(
-                              color: widget.device.statusColor,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            widget.device.status,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Color(0xFF666666),
-                              fontFamily: 'Inter',
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Container(
-                            width: 6,
-                            height: 6,
-                            decoration: BoxDecoration(
-                              color: widget.device.healthColor,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            widget.device.healthStatus,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: widget.device.healthColor,
-                              fontFamily: 'Inter',
-                            ),
-                          ),
-                        ],
+                      const SizedBox(height: 2),
+                      const Text(
+                        'Press to manually turn off the pump',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFFAAAAAA),
+                          fontFamily: 'Inter',
+                        ),
                       ),
                     ],
                   ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.more_vert,
-                      color: Color(0xFFCCCCCC), size: 20),
-                  onPressed: () {},
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            const Divider(height: 1, color: Color(0xFFEEEEEE)),
-            const SizedBox(height: 12),
-            // Pump control
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      pumpOn ? 'Turn ON the pump' : 'Turn OFF the pump',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF14103B),
-                        fontFamily: 'Inter',
-                      ),
+                  Transform.scale(
+                    scale: 0.85,
+                    child: Switch(
+                      value: pumpOn,
+                      onChanged: (value) {
+                        setState(() {
+                          pumpOn = value;
+                        });
+                      },
+                      activeColor: const Color(0xFF51CF66),
+                      inactiveThumbColor: const Color(0xFFDDDDDD),
+                      inactiveTrackColor: const Color(0xFFEEEEEE),
                     ),
-                    const SizedBox(height: 2),
-                    const Text(
-                      'Press to manually turn off the pump',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFFAAAAAA),
-                        fontFamily: 'Inter',
-                      ),
-                    ),
-                  ],
-                ),
-                Transform.scale(
-                  scale: 0.85,
-                  child: Switch(
-                    value: pumpOn,
-                    onChanged: (value) {
-                      setState(() {
-                        pumpOn = value;
-                      });
-                    },
-                    activeColor: const Color(0xFF51CF66),
-                    inactiveThumbColor: const Color(0xFFDDDDDD),
-                    inactiveTrackColor: const Color(0xFFEEEEEE),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            const Divider(height: 1, color: Color(0xFFEEEEEE)),
-            const SizedBox(height: 12),
-            // Water quality info
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                ],
+              ),
+              const SizedBox(height: 12),
+              const Divider(height: 1, color: Color(0xFFEEEEEE)),
+              const SizedBox(height: 12),
+              // Water quality info
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Incoming water',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF0052cc),
+                            fontFamily: 'Inter',
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        _buildWaterQualityRow(
+                          'Lead (Pb²⁺)',
+                          widget.device.incomingWaterLead,
+                          widget.device.incomingWaterLeadSafe,
+                        ),
+                        const SizedBox(height: 4),
+                        _buildWaterQualityRow(
+                          'Mercury (Hg²⁺)',
+                          widget.device.incomingWaterMercury,
+                          widget.device.incomingWaterMercurySafe,
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Outgoing water',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF0052cc),
+                            fontFamily: 'Inter',
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        _buildWaterQualityRow(
+                          'Lead (Pb²⁺)',
+                          widget.device.outgoingWaterLead,
+                          widget.device.outgoingWaterLeadSafe,
+                        ),
+                        const SizedBox(height: 4),
+                        _buildWaterQualityRow(
+                          'Mercury (Hg²⁺)',
+                          widget.device.outgoingWaterMercury,
+                          widget.device.outgoingWaterMercurySafe,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 20),
+                  // Water level indicator
+                  Column(
                     children: [
                       Text(
-                        'Incoming water',
+                        '${widget.device.waterLevel}%',
                         style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
                           color: Color(0xFF0052cc),
                           fontFamily: 'Inter',
                         ),
                       ),
-                      const SizedBox(height: 6),
-                      _buildWaterQualityRow(
-                        'Lead (Pb²⁺)',
-                        widget.device.incomingWaterLead,
-                        widget.device.incomingWaterLeadSafe,
-                      ),
-                      const SizedBox(height: 4),
-                      _buildWaterQualityRow(
-                        'Mercury (Hg²⁺)',
-                        widget.device.incomingWaterMercury,
-                        widget.device.incomingWaterMercurySafe,
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Outgoing water',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF0052cc),
+                      const Text(
+                        'water level',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: Color(0xFFAAAAAA),
                           fontFamily: 'Inter',
                         ),
                       ),
-                      const SizedBox(height: 6),
-                      _buildWaterQualityRow(
-                        'Lead (Pb²⁺)',
-                        widget.device.outgoingWaterLead,
-                        widget.device.outgoingWaterLeadSafe,
-                      ),
-                      const SizedBox(height: 4),
-                      _buildWaterQualityRow(
-                        'Mercury (Hg²⁺)',
-                        widget.device.outgoingWaterMercury,
-                        widget.device.outgoingWaterMercurySafe,
-                      ),
+                      const SizedBox(height: 10),
+                      WaterLevelIndicator(level: widget.device.waterLevel),
                     ],
                   ),
-                ),
-                const SizedBox(width: 20),
-                // Water level indicator
-                Column(
-                  children: [
-                    Text(
-                      '${widget.device.waterLevel}%',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF0052cc),
-                        fontFamily: 'Inter',
-                      ),
-                    ),
-                    const Text(
-                      'water level',
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: Color(0xFFAAAAAA),
-                        fontFamily: 'Inter',
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    WaterLevelIndicator(level: widget.device.waterLevel),
-                  ],
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -341,6 +352,233 @@ class _DeviceCardState extends State<DeviceCard> {
           ),
         ),
       ],
+    );
+  }
+
+  void _showDeviceOptions(BuildContext context, DeviceData device) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Handle bar
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFDDDDDD),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              // Options
+              _buildBottomSheetOption(
+                'Refresh',
+                Icons.refresh,
+                const Color(0xFF0052cc),
+                () {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Device refreshed')),
+                  );
+                },
+              ),
+              _buildBottomSheetOption(
+                'Restore to factory',
+                Icons.restore,
+                const Color(0xFF0052cc),
+                () {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Restoring to factory settings...')),
+                  );
+                },
+              ),
+              _buildBottomSheetOption(
+                'Upgrade firmware',
+                Icons.system_update,
+                const Color(0xFF0052cc),
+                () {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Checking for updates...')),
+                  );
+                },
+              ),
+              const Divider(height: 1, color: Color(0xFFEEEEEE)),
+              _buildBottomSheetOption(
+                'Delete device',
+                Icons.delete_outline,
+                const Color(0xFFFF6B6B),
+                () {
+                  Navigator.pop(context);
+                  _showDeleteConfirmation(context, device);
+                },
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildBottomSheetOption(
+    String label,
+    IconData icon,
+    Color color,
+    VoidCallback onTap,
+  ) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        child: Row(
+          children: [
+            Icon(icon, color: color, size: 20),
+            const SizedBox(width: 16),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: color,
+                fontFamily: 'Inter',
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation(BuildContext context, DeviceData device) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Icon
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFF6B6B).withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.delete_outline,
+                    color: Color(0xFFFF6B6B),
+                    size: 32,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Title
+                const Text(
+                  'Delete Device?',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF14103B),
+                    fontFamily: 'Inter',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // Description
+                Text(
+                  'Are you sure you want to delete "${device.name}"? This action cannot be undone.',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF666666),
+                    fontFamily: 'Inter',
+                    height: 1.6,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                // Buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFF5F5F5),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: const Text(
+                          'Cancel',
+                          style: TextStyle(
+                            color: Color(0xFF14103B),
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                            fontFamily: 'Inter',
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('${device.name} deleted successfully'),
+                              backgroundColor: const Color(0xFF51CF66),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFFF6B6B),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: const Text(
+                          'Delete',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                            fontFamily: 'Inter',
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
