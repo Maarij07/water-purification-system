@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../widgets/common_app_bar.dart';
-import '../widgets/common_drawer.dart';
+import '../../widgets/common_app_bar.dart';
+import '../../widgets/common_drawer.dart';
 
 class AboutUsScreen extends StatelessWidget {
   const AboutUsScreen({Key? key}) : super(key: key);

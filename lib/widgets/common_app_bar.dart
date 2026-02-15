@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import '../screens/notifications_screen.dart';
 
 class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
   final GlobalKey<ScaffoldState> scaffoldKey;
+  final String? screenName;
 
-  const CommonAppBar({Key? key, required this.scaffoldKey}) : super(key: key);
+  const CommonAppBar({Key? key, required this.scaffoldKey, this.screenName}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -16,25 +18,35 @@ class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
           scaffoldKey.currentState?.openDrawer();
         },
       ),
-      title: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Image.asset(
-            'assets/logo.png',
-            height: 30,
-          ),
-          const SizedBox(width: 8),
-          const Text(
-            'QIPHLOW',
-            style: TextStyle(
-              color: Color(0xFF001a4d),
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              fontFamily: 'Inter',
+      title: screenName != null
+          ? Text(
+              screenName!,
+              style: const TextStyle(
+                color: Color(0xFF14103B),
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                fontFamily: 'Inter',
+              ),
+            )
+          : Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset(
+                  'assets/logo.png',
+                  height: 30,
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  'QIPHLOW',
+                  style: TextStyle(
+                    color: Color(0xFF001a4d),
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Inter',
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
-      ),
       centerTitle: true,
       actions: [
         // Plus button in light rounded square
@@ -57,7 +69,14 @@ class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
             IconButton(
               icon: const Icon(Icons.notifications_outlined,
                   color: Color(0xFF0052cc), size: 28),
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const NotificationsScreen(),
+                  ),
+                );
+              },
             ),
             Positioned(
               top: 8,

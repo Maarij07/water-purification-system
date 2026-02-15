@@ -21,6 +21,14 @@ class _SignInScreenState extends State<SignInScreen> {
   final _phoneController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    // Pre-fill dummy credentials
+    _emailController.text = 'test@gmail.com';
+    _passwordController.text = 'Test123';
+  }
+
+  @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();

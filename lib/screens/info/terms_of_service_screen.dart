@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../widgets/common_app_bar.dart';
-import '../widgets/common_drawer.dart';
+import '../../widgets/common_app_bar.dart';
+import '../../widgets/common_drawer.dart';
 
-class PrivacyPolicyScreen extends StatelessWidget {
-  const PrivacyPolicyScreen({Key? key}) : super(key: key);
+class TermsOfServiceScreen extends StatelessWidget {
+  const TermsOfServiceScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -13,7 +13,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
       key: scaffoldKey,
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: CommonAppBar(scaffoldKey: scaffoldKey),
-      drawer: CommonDrawer(scaffoldKey: scaffoldKey, currentRoute: '/privacy-policy'),
+      drawer: CommonDrawer(scaffoldKey: scaffoldKey, currentRoute: '/terms-of-service'),
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -24,7 +24,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
               child: const Row(
                 children: [
                   Text(
-                    'Privacy policy',
+                    'Terms of service',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,

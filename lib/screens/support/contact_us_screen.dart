@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../widgets/common_app_bar.dart';
-import '../widgets/common_drawer.dart';
+import '../../widgets/common_app_bar.dart';
+import '../../widgets/common_drawer.dart';
 
 class ContactUsScreen extends StatelessWidget {
   const ContactUsScreen({Key? key}) : super(key: key);
