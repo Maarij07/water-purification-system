@@ -112,7 +112,7 @@ class _OnboardScreenState extends State<OnboardScreen> {
                     // Skip button
                     TextButton(
                       onPressed: () {
-                        Navigator.pushReplacementNamed(context, '/home');
+                        Navigator.pushReplacementNamed(context, '/signin');
                       },
                       child: const Text(
                         'Skip',
@@ -132,7 +132,7 @@ class _OnboardScreenState extends State<OnboardScreen> {
                   child: ElevatedButton(
                     onPressed: () {
                       if (_currentPage == onboardData.length - 1) {
-                        Navigator.pushReplacementNamed(context, '/home');
+                        Navigator.pushReplacementNamed(context, '/signin');
                       } else {
                         _pageController.nextPage(
                           duration: const Duration(milliseconds: 300),

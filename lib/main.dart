@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'screens/splash_screen.dart';
 import 'screens/onboard_screen.dart';
+import 'screens/signin_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/calibration_screen.dart';
 import 'screens/network_device_screen.dart';
@@ -34,6 +35,7 @@ class MyApp extends StatelessWidget {
       routes: {
         '/splash': (context) => const SplashScreen(),
         '/onboard': (context) => const OnboardScreen(),
+        '/signin': (context) => const SignInScreen(),
         '/home': (context) => const HomeScreen(),
         '/calibration': (context) => const CalibrationScreen(),
         '/network-device': (context) => const NetworkDeviceScreen(),
