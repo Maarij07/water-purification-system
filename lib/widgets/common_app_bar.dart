@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../screens/notifications_screen.dart';
+import '../screens/notifications/notifications_screen.dart';
+import '../screens/home/device_management_screen.dart';
 
 class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
   final GlobalKey<ScaffoldState> scaffoldKey;
@@ -58,7 +59,14 @@ class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
           ),
           child: IconButton(
             icon: const Icon(Icons.add, color: Color(0xFF0052cc), size: 24),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const DeviceManagementScreen(),
+                ),
+              );
+            },
             padding: const EdgeInsets.all(8),
             constraints: const BoxConstraints(),
           ),

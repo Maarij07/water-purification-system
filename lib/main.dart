@@ -5,6 +5,8 @@ import 'screens/auth/signin_screen.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/tutorials/calibration_screen.dart';
 import 'screens/tutorials/network_connection_screen.dart';
+import 'screens/tutorials/device_installation_screen.dart';
+import 'screens/tutorials/connect_device_screen.dart';
 import 'screens/profile/my_profile_screen.dart';
 import 'screens/reports/reports_screen.dart';
 import 'screens/settings/settings_screen.dart';
@@ -37,8 +39,18 @@ class MyApp extends StatelessWidget {
         '/onboard': (context) => const OnboardScreen(),
         '/signin': (context) => const SignInScreen(),
         '/home': (context) => const HomeScreen(),
-        '/calibration': (context) => const CalibrationScreen(),
-        '/network-device': (context) => const NetworkConnectionScreen(),
+        '/calibration': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+          final fromDrawer = args?['fromDrawer'] ?? false;
+          return CalibrationScreen(fromDrawer: fromDrawer);
+        },
+        '/network-device': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+          final fromDrawer = args?['fromDrawer'] ?? false;
+          return NetworkConnectionScreen(fromDrawer: fromDrawer);
+        },
+        '/device-installation': (context) => const DeviceInstallationScreen(),
+        '/connect-device': (context) => const ConnectDeviceScreen(),
         '/my-profile': (context) => const MyProfileScreen(),
         '/reports': (context) => const ReportsScreen(),
         '/settings': (context) => const SettingsScreen(),

@@ -244,7 +244,14 @@ class CommonDrawer extends StatelessWidget {
       onTap: () {
         Navigator.pop(context);
         if (route != currentRoute) {
-          Navigator.pushReplacementNamed(context, route);
+          // For calibration and network device, pass fromDrawer: true
+          if (route == '/calibration') {
+            Navigator.pushReplacementNamed(context, route, arguments: {'fromDrawer': true});
+          } else if (route == '/network-device') {
+            Navigator.pushReplacementNamed(context, route, arguments: {'fromDrawer': true});
+          } else {
+            Navigator.pushReplacementNamed(context, route);
+          }
         }
       },
       child: Container(

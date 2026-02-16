@@ -1,59 +1,65 @@
 import 'package:flutter/material.dart';
-import '../../widgets/common_drawer.dart';
 
-class CalibrationScreen extends StatefulWidget {
+class ConnectDeviceScreen extends StatefulWidget {
   final bool fromDrawer;
 
-  const CalibrationScreen({Key? key, this.fromDrawer = false}) : super(key: key);
+  const ConnectDeviceScreen({Key? key, this.fromDrawer = false}) : super(key: key);
 
   @override
-  State<CalibrationScreen> createState() => _CalibrationScreenState();
+  State<ConnectDeviceScreen> createState() => _ConnectDeviceScreenState();
 }
 
-class _CalibrationScreenState extends State<CalibrationScreen> {
+class _ConnectDeviceScreenState extends State<ConnectDeviceScreen> {
   late PageController _pageController;
   int _currentPage = 0;
-  late GlobalKey<ScaffoldState> _scaffoldKey;
+  
+  // Form controllers for step 2
+  final TextEditingController _streetController = TextEditingController(text: 'Main str, 5');
+  final TextEditingController _cityController = TextEditingController(text: 'San Diego');
+  final TextEditingController _stateController = TextEditingController(text: 'California');
+  final TextEditingController _zipController = TextEditingController(text: '92101');
+  final TextEditingController _countryController = TextEditingController(text: 'USA');
 
-  final List<CalibrationData> calibrationSteps = [
-    CalibrationData(
-      title: 'Calibrate My\nDevice',
+  final List<ConnectDeviceData> steps = [
+    ConnectDeviceData(
+      title: 'Connect My\nDevice',
       description: '',
       content: [
-        'Welcome message and overview of the calibration process.',
-        'Brief explanation of why calibration is important for accurate measurements.',
+        'Welcome message and overview of the connection process.',
+        'Brief explanation of the components involved (device, network, app).',
       ],
       isFirstStep: true,
       showImage: false,
     ),
-    CalibrationData(
-      title: 'Preparing for\nCalibration',
+    ConnectDeviceData(
+      title: 'Set device installation\naddress',
+      description: '',
+      isFormStep: true,
+      showImage: false,
+    ),
+    ConnectDeviceData(
+      title: 'Preparing\nthe Device',
       description: 'It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout.',
-      content: [],
       showImage: true,
     ),
-    CalibrationData(
-      title: 'Setting the Empty\nLevel',
+    ConnectDeviceData(
+      title: 'Connecting to the\nNetwork',
       description: 'It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout.',
-      content: [],
       showImage: true,
     ),
-    CalibrationData(
-      title: 'Setting the Full\nLevel',
+    ConnectDeviceData(
+      title: 'Connecting the Device\nto the Server',
       description: 'It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout.',
-      content: [],
       showImage: true,
     ),
-    CalibrationData(
-      title: 'Verifying\nCalibration',
+    ConnectDeviceData(
+      title: 'Using the App to\nComplete Setup',
       description: 'It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout.',
-      content: [],
       showImage: true,
     ),
-    CalibrationData(
+    ConnectDeviceData(
       title: 'Troubleshooting Tips',
       description: 'It is a long established fact that a reader will be distracted by the readable content',
-      content: [],
       isTroubleshooting: true,
       showImage: false,
     ),
@@ -63,31 +69,32 @@ class _CalibrationScreenState extends State<CalibrationScreen> {
   void initState() {
     super.initState();
     _pageController = PageController();
-    _scaffoldKey = GlobalKey<ScaffoldState>();
   }
 
   @override
   void dispose() {
     _pageController.dispose();
+    _streetController.dispose();
+    _cityController.dispose();
+    _stateController.dispose();
+    _zipController.dispose();
+    _countryController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      key: _scaffoldKey,
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.menu, color: Color(0xFF0052cc), size: 28),
-          onPressed: () {
-            _scaffoldKey.currentState?.openDrawer();
-          },
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF0052cc), size: 24),
+          onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          'Calibrate Device',
+          'Connect Device',
           style: TextStyle(
             color: Color(0xFF14103B),
             fontSize: 18,
@@ -97,7 +104,6 @@ class _CalibrationScreenState extends State<CalibrationScreen> {
         ),
         centerTitle: true,
       ),
-      drawer: CommonDrawer(scaffoldKey: _scaffoldKey, currentRoute: '/calibration'),
       body: Column(
         children: [
           // PageView for content
@@ -109,9 +115,16 @@ class _CalibrationScreenState extends State<CalibrationScreen> {
                   _currentPage = index;
                 });
               },
-              itemCount: calibrationSteps.length,
+              itemCount: steps.length,
               itemBuilder: (context, index) {
-                return CalibrationPage(data: calibrationSteps[index]);
+                return ConnectDevicePage(
+                  data: steps[index],
+                  streetController: _streetController,
+                  cityController: _cityController,
+                  stateController: _stateController,
+                  zipController: _zipController,
+                  countryController: _countryController,
+                );
               },
             ),
           ),
@@ -120,56 +133,33 @@ class _CalibrationScreenState extends State<CalibrationScreen> {
             padding: const EdgeInsets.all(20),
             child: Column(
               children: [
-                // Dots indicator and Contact support
-                if (calibrationSteps[_currentPage].isTroubleshooting)
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(
-                      calibrationSteps.length,
-                      (index) => Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                        width: _currentPage == index ? 24 : 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: _currentPage == index
-                              ? const Color(0xFF1a1a1a)
-                              : const Color(0xFFcccccc),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                      ),
-                    ),
-                  )
-                else
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(
-                      calibrationSteps.length,
-                      (index) => Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                        width: _currentPage == index ? 24 : 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: _currentPage == index
-                              ? const Color(0xFF1a1a1a)
-                              : const Color(0xFFcccccc),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
+                // Dots indicator
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(
+                    steps.length,
+                    (index) => Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      width: _currentPage == index ? 24 : 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: _currentPage == index
+                            ? const Color(0xFF1a1a1a)
+                            : const Color(0xFFcccccc),
+                        borderRadius: BorderRadius.circular(4),
                       ),
                     ),
                   ),
+                ),
                 const SizedBox(height: 24),
                 // Action button
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
-                      if (_currentPage == calibrationSteps.length - 1) {
-                        // Show completion modal only if not from drawer
-                        if (widget.fromDrawer) {
-                          Navigator.pushReplacementNamed(context, '/home');
-                        } else {
-                          _showCompletionModal(context);
-                        }
+                      if (_currentPage == steps.length - 1) {
+                        // Show completion modal
+                        _showCompletionModal(context);
                       } else {
                         _pageController.nextPage(
                           duration: const Duration(milliseconds: 300),
@@ -187,7 +177,7 @@ class _CalibrationScreenState extends State<CalibrationScreen> {
                     child: Text(
                       _currentPage == 0
                           ? 'Start'
-                          : _currentPage == calibrationSteps.length - 1
+                          : _currentPage == steps.length - 1
                               ? 'Finish'
                               : 'Next',
                       style: const TextStyle(
@@ -254,7 +244,7 @@ class _CalibrationScreenState extends State<CalibrationScreen> {
                 ),
               ),
               const SizedBox(height: 28),
-              // Connect Network button
+              // Start calibration button
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -274,7 +264,7 @@ class _CalibrationScreenState extends State<CalibrationScreen> {
                     ),
                   ),
                   child: const Text(
-                    'Connect Network',
+                    'Start calibration',
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w600,
@@ -313,23 +303,37 @@ class _CalibrationScreenState extends State<CalibrationScreen> {
   }
 }
 
+class ConnectDevicePage extends StatefulWidget {
+  final ConnectDeviceData data;
+  final TextEditingController streetController;
+  final TextEditingController cityController;
+  final TextEditingController stateController;
+  final TextEditingController zipController;
+  final TextEditingController countryController;
 
-class CalibrationPage extends StatefulWidget {
-  final CalibrationData data;
-
-  const CalibrationPage({Key? key, required this.data}) : super(key: key);
+  const ConnectDevicePage({
+    Key? key,
+    required this.data,
+    required this.streetController,
+    required this.cityController,
+    required this.stateController,
+    required this.zipController,
+    required this.countryController,
+  }) : super(key: key);
 
   @override
-  State<CalibrationPage> createState() => _CalibrationPageState();
+  State<ConnectDevicePage> createState() => _ConnectDevicePageState();
 }
 
-class _CalibrationPageState extends State<CalibrationPage> {
+class _ConnectDevicePageState extends State<ConnectDevicePage> {
   int? _expandedIndex;
 
   @override
   Widget build(BuildContext context) {
     if (widget.data.isFirstStep) {
       return _buildFirstStepPage();
+    } else if (widget.data.isFormStep) {
+      return _buildFormStepPage();
     } else if (widget.data.isTroubleshooting) {
       return _buildTroubleshootingPage();
     } else {
@@ -383,6 +387,271 @@ class _CalibrationPageState extends State<CalibrationPage> {
                 ],
               ),
             )),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFormStepPage() {
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              widget.data.title,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF14103B),
+                fontFamily: 'Inter',
+                height: 1.2,
+              ),
+            ),
+            const SizedBox(height: 24),
+            // Street Address
+            Text(
+              'Street Address',
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFFAAAAAA),
+                fontFamily: 'Inter',
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: widget.streetController,
+              decoration: InputDecoration(
+                hintText: 'Main str, 5',
+                hintStyle: const TextStyle(
+                  color: Color(0xFF14103B),
+                  fontSize: 14,
+                  fontFamily: 'Inter',
+                ),
+                filled: true,
+                fillColor: const Color(0xFFFAFAFA),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(
+                    color: Color(0xFFEEEEEE),
+                    width: 1,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(
+                    color: Color(0xFFEEEEEE),
+                    width: 1,
+                  ),
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              ),
+              style: const TextStyle(
+                color: Color(0xFF14103B),
+                fontSize: 14,
+                fontFamily: 'Inter',
+              ),
+            ),
+            const SizedBox(height: 20),
+            // City
+            Text(
+              'City',
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFFAAAAAA),
+                fontFamily: 'Inter',
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: widget.cityController,
+              decoration: InputDecoration(
+                hintText: 'San Diego',
+                hintStyle: const TextStyle(
+                  color: Color(0xFF14103B),
+                  fontSize: 14,
+                  fontFamily: 'Inter',
+                ),
+                filled: true,
+                fillColor: const Color(0xFFFAFAFA),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(
+                    color: Color(0xFFEEEEEE),
+                    width: 1,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(
+                    color: Color(0xFFEEEEEE),
+                    width: 1,
+                  ),
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              ),
+              style: const TextStyle(
+                color: Color(0xFF14103B),
+                fontSize: 14,
+                fontFamily: 'Inter',
+              ),
+            ),
+            const SizedBox(height: 20),
+            // State/Province and ZIP/Postal Code
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'State/Province',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFFAAAAAA),
+                          fontFamily: 'Inter',
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: widget.stateController,
+                        decoration: InputDecoration(
+                          hintText: 'California',
+                          hintStyle: const TextStyle(
+                            color: Color(0xFF14103B),
+                            fontSize: 14,
+                            fontFamily: 'Inter',
+                          ),
+                          filled: true,
+                          fillColor: const Color(0xFFFAFAFA),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFEEEEEE),
+                              width: 1,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFEEEEEE),
+                              width: 1,
+                            ),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        ),
+                        style: const TextStyle(
+                          color: Color(0xFF14103B),
+                          fontSize: 14,
+                          fontFamily: 'Inter',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'ZIP/Postal Code',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFFAAAAAA),
+                          fontFamily: 'Inter',
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: widget.zipController,
+                        decoration: InputDecoration(
+                          hintText: '92101',
+                          hintStyle: const TextStyle(
+                            color: Color(0xFF14103B),
+                            fontSize: 14,
+                            fontFamily: 'Inter',
+                          ),
+                          filled: true,
+                          fillColor: const Color(0xFFFAFAFA),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFEEEEEE),
+                              width: 1,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFEEEEEE),
+                              width: 1,
+                            ),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        ),
+                        style: const TextStyle(
+                          color: Color(0xFF14103B),
+                          fontSize: 14,
+                          fontFamily: 'Inter',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            // Country
+            Text(
+              'Country',
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFFAAAAAA),
+                fontFamily: 'Inter',
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: widget.countryController,
+              decoration: InputDecoration(
+                hintText: 'USA',
+                hintStyle: const TextStyle(
+                  color: Color(0xFF14103B),
+                  fontSize: 14,
+                  fontFamily: 'Inter',
+                ),
+                filled: true,
+                fillColor: const Color(0xFFFAFAFA),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(
+                    color: Color(0xFFEEEEEE),
+                    width: 1,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(
+                    color: Color(0xFFEEEEEE),
+                    width: 1,
+                  ),
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              ),
+              style: const TextStyle(
+                color: Color(0xFF14103B),
+                fontSize: 14,
+                fontFamily: 'Inter',
+              ),
+            ),
           ],
         ),
       ),
@@ -557,19 +826,21 @@ class _CalibrationPageState extends State<CalibrationPage> {
   }
 }
 
-class CalibrationData {
+class ConnectDeviceData {
   final String title;
   final String description;
   final List<String> content;
   final bool isFirstStep;
+  final bool isFormStep;
   final bool isTroubleshooting;
   final bool showImage;
 
-  CalibrationData({
+  ConnectDeviceData({
     required this.title,
     required this.description,
-    required this.content,
+    this.content = const [],
     this.isFirstStep = false,
+    this.isFormStep = false,
     this.isTroubleshooting = false,
     this.showImage = false,
   });

@@ -1,61 +1,61 @@
 import 'package:flutter/material.dart';
 import '../../widgets/common_drawer.dart';
 
-class NetworkConnectionScreen extends StatefulWidget {
+class DeviceInstallationScreen extends StatefulWidget {
   final bool fromDrawer;
 
-  const NetworkConnectionScreen({Key? key, this.fromDrawer = false}) : super(key: key);
+  const DeviceInstallationScreen({Key? key, this.fromDrawer = false}) : super(key: key);
 
   @override
-  State<NetworkConnectionScreen> createState() => _NetworkConnectionScreenState();
+  State<DeviceInstallationScreen> createState() => _DeviceInstallationScreenState();
 }
 
-class _NetworkConnectionScreenState extends State<NetworkConnectionScreen> {
+class _DeviceInstallationScreenState extends State<DeviceInstallationScreen> {
   late PageController _pageController;
   int _currentPage = 0;
   late GlobalKey<ScaffoldState> _scaffoldKey;
 
-  final List<NetworkConnectionData> steps = [
-    NetworkConnectionData(
-      title: 'Network\nConnection',
+  final List<DeviceInstallationData> steps = [
+    DeviceInstallationData(
+      title: 'Device\nInstallation',
       description: '',
       content: [
-        'Welcome message and overview of the network connection process.',
-        'Brief explanation of the importance of connecting the device to a network.',
+        'Welcome message and overview of the installation process.',
+        'Brief explanation of the components involved (device, sensors, power connection)',
       ],
       isFirstStep: true,
       showImage: false,
     ),
-    NetworkConnectionData(
-      title: 'Preparing the\nDevice',
+    DeviceInstallationData(
+      title: 'Unboxing and\nPreparing the Device',
       description: 'It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout.',
       showImage: true,
     ),
-    NetworkConnectionData(
-      title: 'Enabling Bluetooth\n(BLE) on the Phone',
+    DeviceInstallationData(
+      title: 'Connecting\nthe Sensors',
       description: 'It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout.',
       showImage: true,
     ),
-    NetworkConnectionData(
-      title: 'Pairing the Device\nvia BLE',
+    DeviceInstallationData(
+      title: 'Powering\nthe Device',
       description: 'It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout.',
       showImage: true,
     ),
-    NetworkConnectionData(
-      title: 'Connecting to\nWi-Fi',
+    DeviceInstallationData(
+      title: 'Attaching the Sensors\nto the Tank',
       description: 'It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout.',
       showImage: true,
     ),
-    NetworkConnectionData(
-      title: 'Connecting to\nCellular Network',
+    DeviceInstallationData(
+      title: 'Initial\nDevice Setup',
       description: 'It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout.',
       showImage: true,
     ),
-    NetworkConnectionData(
-      title: 'Verifying Network\nConnection',
-      description: 'It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout.',
-      showImage: true,
+    DeviceInstallationData(
+      title: 'Troubleshooting Tips',
+      description: 'It is a long established fact that a reader will be distracted by the readable content',
       isTroubleshooting: true,
+      showImage: false,
     ),
   ];
 
@@ -87,7 +87,7 @@ class _NetworkConnectionScreenState extends State<NetworkConnectionScreen> {
           },
         ),
         title: const Text(
-          'Network Connection',
+          'Device Installation',
           style: TextStyle(
             color: Color(0xFF14103B),
             fontSize: 18,
@@ -97,7 +97,7 @@ class _NetworkConnectionScreenState extends State<NetworkConnectionScreen> {
         ),
         centerTitle: true,
       ),
-      drawer: CommonDrawer(scaffoldKey: _scaffoldKey, currentRoute: '/network-device'),
+      drawer: CommonDrawer(scaffoldKey: _scaffoldKey, currentRoute: '/device-installation'),
       body: Column(
         children: [
           // PageView for content
@@ -111,7 +111,7 @@ class _NetworkConnectionScreenState extends State<NetworkConnectionScreen> {
               },
               itemCount: steps.length,
               itemBuilder: (context, index) {
-                return NetworkConnectionPage(data: steps[index]);
+                return DeviceInstallationPage(data: steps[index]);
               },
             ),
           ),
@@ -145,12 +145,8 @@ class _NetworkConnectionScreenState extends State<NetworkConnectionScreen> {
                   child: ElevatedButton(
                     onPressed: () {
                       if (_currentPage == steps.length - 1) {
-                        // Show completion modal only if not from drawer
-                        if (widget.fromDrawer) {
-                          Navigator.pushReplacementNamed(context, '/home');
-                        } else {
-                          _showCompletionModal(context);
-                        }
+                        // Show completion modal
+                        _showCompletionModal(context);
                       } else {
                         _pageController.nextPage(
                           duration: const Duration(milliseconds: 300),
@@ -235,7 +231,7 @@ class _NetworkConnectionScreenState extends State<NetworkConnectionScreen> {
                 ),
               ),
               const SizedBox(height: 28),
-              // OK button
+              // Start connection button
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -255,13 +251,34 @@ class _NetworkConnectionScreenState extends State<NetworkConnectionScreen> {
                     ),
                   ),
                   child: const Text(
-                    'OK',
+                    'Start connection',
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w600,
                       fontSize: 14,
                       fontFamily: 'Inter',
                     ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              // Later link
+              GestureDetector(
+                onTap: () {
+                  Navigator.pop(context);
+                  if (widget.fromDrawer) {
+                    Navigator.pushReplacementNamed(context, '/home');
+                  } else {
+                    Navigator.pop(context);
+                  }
+                },
+                child: const Text(
+                  'Later',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF14103B),
+                    fontFamily: 'Inter',
                   ),
                 ),
               ),
@@ -273,15 +290,24 @@ class _NetworkConnectionScreenState extends State<NetworkConnectionScreen> {
   }
 }
 
-class NetworkConnectionPage extends StatelessWidget {
-  final NetworkConnectionData data;
+class DeviceInstallationPage extends StatefulWidget {
+  final DeviceInstallationData data;
 
-  const NetworkConnectionPage({Key? key, required this.data}) : super(key: key);
+  const DeviceInstallationPage({Key? key, required this.data}) : super(key: key);
+
+  @override
+  State<DeviceInstallationPage> createState() => _DeviceInstallationPageState();
+}
+
+class _DeviceInstallationPageState extends State<DeviceInstallationPage> {
+  int? _expandedIndex;
 
   @override
   Widget build(BuildContext context) {
-    if (data.isFirstStep) {
+    if (widget.data.isFirstStep) {
       return _buildFirstStepPage();
+    } else if (widget.data.isTroubleshooting) {
+      return _buildTroubleshootingPage();
     } else {
       return _buildRegularStepPage();
     }
@@ -295,7 +321,7 @@ class NetworkConnectionPage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              data.title,
+              widget.data.title,
               style: const TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.w700,
@@ -305,7 +331,7 @@ class NetworkConnectionPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 32),
-            ...data.content.map((text) => Padding(
+            ...widget.data.content.map((text) => Padding(
               padding: const EdgeInsets.only(bottom: 16),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -346,7 +372,7 @@ class NetworkConnectionPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (data.showImage)
+            if (widget.data.showImage)
               Container(
                 height: 200,
                 decoration: BoxDecoration(
@@ -354,9 +380,9 @@ class NetworkConnectionPage extends StatelessWidget {
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),
-            if (data.showImage) const SizedBox(height: 24),
+            if (widget.data.showImage) const SizedBox(height: 24),
             Text(
-              data.title,
+              widget.data.title,
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.w700,
@@ -367,7 +393,7 @@ class NetworkConnectionPage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              data.description,
+              widget.data.description,
               style: const TextStyle(
                 fontSize: 14,
                 color: Color(0xFF666666),
@@ -380,22 +406,147 @@ class NetworkConnectionPage extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildTroubleshootingPage() {
+    final faqItems = [
+      {'title': 'Question 1', 'desc': 'Answer description. Amet minim mollit non deserunt ullamco est sit aliqua dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'},
+      {'title': 'Question 2', 'desc': 'Answer description. Amet minim mollit non deserunt ullamco est sit aliqua dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'},
+      {'title': 'Question 3', 'desc': 'Answer description. Amet minim mollit non deserunt ullamco est sit aliqua dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'},
+    ];
+
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              widget.data.title,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF14103B),
+                fontFamily: 'Inter',
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              widget.data.description,
+              style: const TextStyle(
+                fontSize: 14,
+                color: Color(0xFF666666),
+                fontFamily: 'Inter',
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 24),
+            // Accordion FAQ items
+            ...List.generate(faqItems.length, (index) {
+              final item = faqItems[index];
+              final isExpanded = _expandedIndex == index;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border.all(
+                      color: const Color(0xFFEEEEEE),
+                      width: 1,
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _expandedIndex = isExpanded ? null : index;
+                          });
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.all(14),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  item['title']!,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF14103B),
+                                    fontFamily: 'Inter',
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              AnimatedRotation(
+                                turns: isExpanded ? 0.5 : 0,
+                                duration: const Duration(milliseconds: 300),
+                                child: Icon(
+                                  Icons.expand_more,
+                                  color: const Color(0xFF0052cc),
+                                  size: 24,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      AnimatedCrossFade(
+                        firstChild: const SizedBox.shrink(),
+                        secondChild: Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF5F5F5),
+                            border: Border(
+                              top: BorderSide(
+                                color: const Color(0xFFEEEEEE),
+                                width: 1,
+                              ),
+                            ),
+                          ),
+                          padding: const EdgeInsets.all(14),
+                          child: Text(
+                            item['desc']!,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF666666),
+                              fontFamily: 'Inter',
+                              height: 1.6,
+                            ),
+                          ),
+                        ),
+                        crossFadeState: isExpanded
+                            ? CrossFadeState.showSecond
+                            : CrossFadeState.showFirst,
+                        duration: const Duration(milliseconds: 300),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
-class NetworkConnectionData {
+class DeviceInstallationData {
   final String title;
   final String description;
   final List<String> content;
   final bool isFirstStep;
-  final bool showImage;
   final bool isTroubleshooting;
+  final bool showImage;
 
-  NetworkConnectionData({
+  DeviceInstallationData({
     required this.title,
     required this.description,
     this.content = const [],
     this.isFirstStep = false,
-    this.showImage = false,
     this.isTroubleshooting = false,
+    this.showImage = false,
   });
 }
