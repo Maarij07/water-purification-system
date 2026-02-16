@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'screens/splash/splash_screen.dart';
 import 'screens/auth/onboard_screen.dart';
 import 'screens/auth/signin_screen.dart';
+import 'screens/auth/forgot_password_screen.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/tutorials/calibration_screen.dart';
 import 'screens/tutorials/network_connection_screen.dart';
@@ -38,6 +39,7 @@ class MyApp extends StatelessWidget {
         '/splash': (context) => const SplashScreen(),
         '/onboard': (context) => const OnboardScreen(),
         '/signin': (context) => const SignInScreen(),
+        '/forgot-password': (context) => const ForgotPasswordScreen(),
         '/home': (context) => const HomeScreen(),
         '/calibration': (context) {
           final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;

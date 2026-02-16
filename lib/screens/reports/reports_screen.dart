@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../widgets/common_drawer.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'report_filter_screen.dart';
 
 class ReportsScreen extends StatefulWidget {
   const ReportsScreen({Key? key}) : super(key: key);
@@ -138,10 +139,20 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 fontFamily: 'Inter',
               ),
             ),
-            Icon(
-              Icons.tune,
-              color: const Color(0xFF0052cc),
-              size: 24,
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ReportFilterScreen(filterType: 'fluid_usage'),
+                  ),
+                );
+              },
+              child: Icon(
+                Icons.tune,
+                color: const Color(0xFF0052cc),
+                size: 24,
+              ),
             ),
           ],
         ),
@@ -281,10 +292,20 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 fontFamily: 'Inter',
               ),
             ),
-            Icon(
-              Icons.tune,
-              color: const Color(0xFF0052cc),
-              size: 24,
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ReportFilterScreen(filterType: 'fluid_impurity'),
+                  ),
+                );
+              },
+              child: Icon(
+                Icons.tune,
+                color: const Color(0xFF0052cc),
+                size: 24,
+              ),
             ),
           ],
         ),

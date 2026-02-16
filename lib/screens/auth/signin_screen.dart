@@ -286,7 +286,9 @@ class _SignInScreenState extends State<SignInScreen> {
               ),
             ),
             GestureDetector(
-              onTap: () {},
+              onTap: () {
+                Navigator.pushNamed(context, '/forgot-password');
+              },
               child: const Text(
                 'Forgot Password?',
                 style: TextStyle(

@@ -63,6 +63,7 @@ flutter:
   assets:
     - assets/logo.png
     - assets/watermark.png
+    - assets/forgot_password.png
     - assets/onboard_1.png
     - assets/onboard_2.png
     - assets/onboard_3.png
