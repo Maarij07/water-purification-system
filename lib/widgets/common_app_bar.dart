@@ -29,24 +29,9 @@ class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
                 fontFamily: 'Inter',
               ),
             )
-          : Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Image.asset(
-                  'assets/logo.png',
-                  height: 30,
-                ),
-                const SizedBox(width: 8),
-                const Text(
-                  'QIPHLOW',
-                  style: TextStyle(
-                    color: Color(0xFF001a4d),
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    fontFamily: 'Inter',
-                  ),
-                ),
-              ],
+          : Image.asset(
+              'assets/logo-horizontal.png',
+              height: 40,
             ),
       centerTitle: true,
       actions: [

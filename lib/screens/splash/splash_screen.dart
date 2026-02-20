@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../auth/onboard_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -12,13 +13,18 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _navigateToOnboard();
+    _navigateToNextScreen();
   }
 
-  _navigateToOnboard() async {
+  _navigateToNextScreen() async {
     await Future.delayed(const Duration(seconds: 3), () {});
     if (mounted) {
-      Navigator.pushReplacementNamed(context, '/onboard');
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        Navigator.pushReplacementNamed(context, '/home');
+      } else {
+        Navigator.pushReplacementNamed(context, '/onboard');
+      }
     }
   }
 
@@ -26,29 +32,34 @@ class _SplashScreenState extends State<SplashScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              const Color(0xFF001a4d),
-              const Color(0xFF003d99),
-              const Color(0xFF0052cc),
-            ],
-          ),
-        ),
+        color: const Color(0xFF14103B),
         child: Stack(
           children: [
-            // Watermark in background
+            // Watermark on right side (top to middle)
             Positioned(
-              right: -50,
-              bottom: 100,
+              top: -400,
+              right: -400,
               child: Opacity(
                 opacity: 0.15,
                 child: Image.asset(
                   'assets/watermark.png',
-                  width: 300,
-                  height: 300,
+                  width: 1600,
+                  height: 1600,
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+            // Watermark on bottom right
+            Positioned(
+              bottom: -500,
+              right: -350,
+              child: Opacity(
+                opacity: 0.12,
+                child: Image.asset(
+                  'assets/watermark.png',
+                  width: 1400,
+                  height: 1400,
+                  fit: BoxFit.contain,
                 ),
               ),
             ),
@@ -56,8 +67,8 @@ class _SplashScreenState extends State<SplashScreen> {
             Center(
               child: Image.asset(
                 'assets/logo.png',
-                width: 150,
-                height: 150,
+                width: 120,
+                height: 120,
               ),
             ),
           ],

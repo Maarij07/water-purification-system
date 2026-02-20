@@ -47,66 +47,90 @@ class MyProfileScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Profile card with blue gradient background
+            // Profile card with dark background and watermark
             Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    const Color(0xFF001a4d),
-                    const Color(0xFF0052cc),
-                  ],
-                ),
-              ),
+              color: const Color(0xFF14103B),
               padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
+              child: Stack(
                 children: [
-                  // Avatar
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE8F0FF),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Colors.white,
-                        width: 3,
+                  // Watermark on right side
+                  Positioned(
+                    top: -400,
+                    right: -400,
+                    child: Opacity(
+                      opacity: 0.15,
+                      child: Image.asset(
+                        'assets/watermark.png',
+                        width: 1600,
+                        height: 1600,
+                        fit: BoxFit.contain,
                       ),
-                    ),
-                    child: const Icon(
-                      Icons.person,
-                      color: Color(0xFF0052cc),
-                      size: 40,
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  // Name with edit icon
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  // Watermark on bottom right
+                  Positioned(
+                    bottom: -500,
+                    right: -350,
+                    child: Opacity(
+                      opacity: 0.12,
+                      child: Image.asset(
+                        'assets/watermark.png',
+                        width: 1400,
+                        height: 1400,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
+                  // Content
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      const Text(
-                        'Diana Johnson',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                          fontFamily: 'Inter',
+                      // Avatar
+                      Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE8F0FF),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.white,
+                            width: 3,
+                          ),
+                        ),
+                        child: const Icon(
+                          Icons.person,
+                          color: Color(0xFF0052cc),
+                          size: 40,
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      GestureDetector(
-                        onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Edit profile')),
-                          );
-                        },
-                        child: const Icon(
-                          Icons.edit_outlined,
-                          color: Colors.white,
-                          size: 18,
-                        ),
+                      const SizedBox(height: 16),
+                      // Name with edit icon
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text(
+                            'Diana Johnson',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                              fontFamily: 'Inter',
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          GestureDetector(
+                            onTap: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Edit profile')),
+                              );
+                            },
+                            child: const Icon(
+                              Icons.edit_outlined,
+                              color: Colors.white,
+                              size: 18,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),

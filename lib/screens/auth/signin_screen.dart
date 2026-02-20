@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../../services/firebase_service.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({Key? key}) : super(key: key);
@@ -46,45 +47,72 @@ class _SignInScreenState extends State<SignInScreen> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Header with gradient background - Full width
+            // Header with dark background and watermark
             Container(
               width: double.infinity,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    const Color(0xFF001a4d),
-                    const Color(0xFF003d99),
-                    const Color(0xFF0052cc),
-                  ],
-                ),
-              ),
-              padding: const EdgeInsets.fromLTRB(20, 60, 20, 40),
-              child: Column(
+              color: const Color(0xFF14103B),
+              padding: const EdgeInsets.fromLTRB(20, 40, 20, 40),
+              child: Stack(
                 children: [
-                  Image.asset(
-                    'assets/logo.png',
-                    height: 50,
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'QIPHLOW',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.w700,
-                      fontFamily: 'Inter',
+                  // Watermark on right side
+                  Positioned(
+                    top: -400,
+                    right: -400,
+                    child: Opacity(
+                      opacity: 0.15,
+                      child: Image.asset(
+                        'assets/watermark.png',
+                        width: 1600,
+                        height: 1600,
+                        fit: BoxFit.contain,
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'It is a long established fact that a reader',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Color(0xFFB0C4FF),
-                      fontSize: 13,
-                      fontFamily: 'Inter',
+                  // Watermark on bottom right
+                  Positioned(
+                    bottom: -500,
+                    right: -350,
+                    child: Opacity(
+                      opacity: 0.12,
+                      child: Image.asset(
+                        'assets/watermark.png',
+                        width: 1400,
+                        height: 1400,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
+                  // Content - centered
+                  Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Image.asset(
+                          'assets/logo.png',
+                          height: 50,
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Welcome back',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'Inter',
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Log in to your account to continue',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Color(0xFFB0C4FF),
+                            fontSize: 13,
+                            fontFamily: 'Inter',
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -176,13 +204,9 @@ class _SignInScreenState extends State<SignInScreen> {
     );
   }
 
-  void _handleLogIn() {
+  void _handleLogIn() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
-
-    // Dummy credentials
-    const String dummyEmail = 'test@gmail.com';
-    const String dummyPassword = 'Test123';
 
     if (email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -194,15 +218,20 @@ class _SignInScreenState extends State<SignInScreen> {
       return;
     }
 
-    if (email == dummyEmail && password == dummyPassword) {
-      Navigator.pushReplacementNamed(context, '/home');
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Invalid email or password'),
-          backgroundColor: Color(0xFFFF6B6B),
-        ),
-      );
+    try {
+      await FirebaseService.signIn(email: email, password: password);
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/home');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: const Color(0xFFFF6B6B),
+          ),
+        );
+      }
     }
   }
 
@@ -546,8 +575,63 @@ class _SignInScreenState extends State<SignInScreen> {
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: () {
-              Navigator.pushReplacementNamed(context, '/home');
+            onPressed: () async {
+              final fullName = _fullNameController.text.trim();
+              final username = _usernameController.text.trim();
+              final email = _emailController.text.trim();
+              final password = _passwordController.text.trim();
+              final confirmPassword = _confirmPasswordController.text.trim();
+              final phone = _phoneController.text.trim();
+
+              if (fullName.isEmpty || username.isEmpty || email.isEmpty || password.isEmpty || phone.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Please fill all fields'),
+                    backgroundColor: Color(0xFFFF6B6B),
+                  ),
+                );
+                return;
+              }
+
+              if (password != confirmPassword) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Passwords do not match'),
+                    backgroundColor: Color(0xFFFF6B6B),
+                  ),
+                );
+                return;
+              }
+
+              try {
+                await FirebaseService.signUp(
+                  email: email,
+                  password: password,
+                  fullName: fullName,
+                  username: username,
+                  phone: phone,
+                );
+                
+                // Save user data separately
+                await FirebaseService.saveUserData(
+                  fullName: fullName,
+                  username: username,
+                  phone: phone,
+                );
+                
+                if (mounted) {
+                  Navigator.pushReplacementNamed(context, '/home');
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(e.toString()),
+                      backgroundColor: const Color(0xFFFF6B6B),
+                    ),
+                  );
+                }
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF001a4d),

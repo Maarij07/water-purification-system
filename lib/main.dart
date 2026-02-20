@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'screens/splash/splash_screen.dart';
 import 'screens/auth/onboard_screen.dart';
 import 'screens/auth/signin_screen.dart';
@@ -17,7 +19,15 @@ import 'screens/info/privacy_policy_screen.dart';
 import 'screens/support/need_help_screen.dart';
 import 'screens/support/contact_us_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    print('Firebase initialization error: $e');
+  }
   runApp(const MyApp());
 }
 

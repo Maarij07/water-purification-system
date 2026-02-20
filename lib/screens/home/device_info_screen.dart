@@ -36,7 +36,7 @@ class _DeviceInfoScreenState extends State<DeviceInfoScreen>
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: const Color(0xFF14103B),
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white, size: 24),
@@ -60,126 +60,136 @@ class _DeviceInfoScreenState extends State<DeviceInfoScreen>
             },
           ),
         ],
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                const Color(0xFF001a4d),
-                const Color(0xFF003d99),
-                const Color(0xFF0052cc),
-              ],
-            ),
-          ),
-        ),
       ),
       body: Column(
         children: [
           // Hero section with device info
           Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  const Color(0xFF001a4d),
-                  const Color(0xFF003d99),
-                  const Color(0xFF0052cc),
-                ],
-              ),
-            ),
+            color: const Color(0xFF14103B),
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Stack(
               children: [
-                // Component name
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Component name 1',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                        fontFamily: 'Inter',
-                      ),
+                // Watermark on right side
+                Positioned(
+                  top: -400,
+                  right: -400,
+                  child: Opacity(
+                    opacity: 0.15,
+                    child: Image.asset(
+                      'assets/watermark.png',
+                      width: 1600,
+                      height: 1600,
+                      fit: BoxFit.contain,
                     ),
-                    GestureDetector(
-                      onTap: () {
-                        _showInfoTooltip(context);
-                      },
-                      child: Container(
-                        width: 28,
-                        height: 28,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.15),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.3),
-                            width: 1,
+                  ),
+                ),
+                // Watermark on bottom right
+                Positioned(
+                  bottom: -500,
+                  right: -350,
+                  child: Opacity(
+                    opacity: 0.12,
+                    child: Image.asset(
+                      'assets/watermark.png',
+                      width: 1400,
+                      height: 1400,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+                // Content
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Component name
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Component name 1',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            fontFamily: 'Inter',
                           ),
                         ),
-                        child: const Icon(
-                          Icons.info_outlined,
-                          color: Colors.white,
-                          size: 16,
+                        GestureDetector(
+                          onTap: () {
+                            _showInfoTooltip(context);
+                          },
+                          child: Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.15),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.3),
+                                width: 1,
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.info_outlined,
+                              color: Colors.white,
+                              size: 16,
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                // Status
-                Row(
-                  children: [
-                    Container(
-                      width: 6,
-                      height: 6,
-                      decoration: BoxDecoration(
-                        color: widget.device.statusColor,
-                        shape: BoxShape.circle,
-                      ),
+                    const SizedBox(height: 10),
+                    // Status
+                    Row(
+                      children: [
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            color: widget.device.statusColor,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          widget.device.status,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.white,
+                            fontFamily: 'Inter',
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            color: widget.device.healthColor,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          widget.device.healthStatus,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: widget.device.healthColor,
+                            fontFamily: 'Inter',
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 6),
-                    Text(
-                      widget.device.status,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.white,
-                        fontFamily: 'Inter',
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Container(
-                      width: 6,
-                      height: 6,
-                      decoration: BoxDecoration(
-                        color: widget.device.healthColor,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      widget.device.healthStatus,
+                    const SizedBox(height: 8),
+                    // Location
+                    const Text(
+                      'Home Name',
                       style: TextStyle(
                         fontSize: 12,
-                        color: widget.device.healthColor,
+                        color: Color(0xFFB0C4FF),
                         fontFamily: 'Inter',
                       ),
                     ),
                   ],
-                ),
-                const SizedBox(height: 8),
-                // Location
-                const Text(
-                  'Home Name',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFFB0C4FF),
-                    fontFamily: 'Inter',
-                  ),
                 ),
               ],
             ),

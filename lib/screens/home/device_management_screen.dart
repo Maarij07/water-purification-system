@@ -19,19 +19,7 @@ class _DeviceManagementScreenState extends State<DeviceManagementScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                const Color(0xFF001a4d),
-                const Color(0xFF003d99),
-                const Color(0xFF0052cc),
-              ],
-            ),
-          ),
-        ),
+        backgroundColor: const Color(0xFF14103B),
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white, size: 24),
@@ -40,42 +28,65 @@ class _DeviceManagementScreenState extends State<DeviceManagementScreen> {
       ),
       body: Column(
         children: [
-          // Blue gradient header
+          // Dark header with watermark
           Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  const Color(0xFF001a4d),
-                  const Color(0xFF003d99),
-                  const Color(0xFF0052cc),
-                ],
-              ),
-            ),
+            color: const Color(0xFF14103B),
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Stack(
               children: [
-                const Text(
-                  'Device\nmanagement',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                    fontFamily: 'Inter',
-                    height: 1.2,
+                // Watermark on right side (larger and more visible)
+                Positioned(
+                  top: -400,
+                  right: -400,
+                  child: Opacity(
+                    opacity: 0.15,
+                    child: Image.asset(
+                      'assets/watermark.png',
+                      width: 1600,
+                      height: 1600,
+                      fit: BoxFit.contain,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 12),
-                const Text(
-                  'It is a long established fact that a reader will be distracted by the readable content',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFFB0C4FF),
-                    fontFamily: 'Inter',
-                    height: 1.5,
+                // Watermark on bottom right (larger and more visible)
+                Positioned(
+                  bottom: -500,
+                  right: -350,
+                  child: Opacity(
+                    opacity: 0.12,
+                    child: Image.asset(
+                      'assets/watermark.png',
+                      width: 1400,
+                      height: 1400,
+                      fit: BoxFit.contain,
+                    ),
                   ),
+                ),
+                // Text content
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Device\nmanagement',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                        fontFamily: 'Inter',
+                        height: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'It is a long established fact that a reader will be distracted by the readable content',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFFB0C4FF),
+                        fontFamily: 'Inter',
+                        height: 1.5,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

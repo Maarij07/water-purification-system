@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/firebase_service.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({Key? key}) : super(key: key);
@@ -227,11 +228,21 @@ class _EmailResetScreenState extends State<EmailResetScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
                     if (_emailController.text.isNotEmpty) {
-                      setState(() {
-                        _currentStep = 1;
-                      });
+                      try {
+                        await FirebaseService.sendPasswordResetEmail(_emailController.text.trim());
+                        setState(() {
+                          _currentStep = 1;
+                        });
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(e.toString()),
+                            backgroundColor: const Color(0xFFFF6B6B),
+                          ),
+                        );
+                      }
                     }
                   },
                   style: ElevatedButton.styleFrom(
