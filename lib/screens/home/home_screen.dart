@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../widgets/common_app_bar.dart';
 import '../../widgets/common_drawer.dart';
+import '../../widgets/shimmer_widget.dart';
+import '../../services/api_service.dart';
 import 'device_info_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -11,59 +13,195 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final List<DeviceData> devices = [
-    DeviceData(
-      name: 'My Device 1, London SW1A 1AA',
-      status: 'Online',
-      statusColor: const Color(0xFF0052cc),
-      healthStatus: 'Not Healthy',
-      healthColor: const Color(0xFFFF6B6B),
-      pumpOn: false,
-      incomingWaterLead: '5460 μg/L',
-      incomingWaterLeadSafe: '-140 μg/L',
-      incomingWaterMercury: '460 μg/L',
-      incomingWaterMercurySafe: '-120 μg/L',
-      outgoingWaterLead: '5010 μg/L',
-      outgoingWaterLeadSafe: '-10 μg/L',
-      outgoingWaterMercury: '40 μg/L',
-      outgoingWaterMercurySafe: '-10 μg/L',
-      waterLevel: 25,
-    ),
-    DeviceData(
-      name: 'My Device 2, Manchester M1 1AE',
-      status: 'Online',
-      statusColor: const Color(0xFF0052cc),
-      healthStatus: 'Healthy',
-      healthColor: const Color(0xFF51CF66),
-      pumpOn: true,
-      incomingWaterLead: '5460 μg/L',
-      incomingWaterLeadSafe: '-140 μg/L',
-      incomingWaterMercury: '460 μg/L',
-      incomingWaterMercurySafe: '-400 μg/L',
-      outgoingWaterLead: '5010 μg/L',
-      outgoingWaterLeadSafe: '-10 μg/L',
-      outgoingWaterMercury: '40 μg/L',
-      outgoingWaterMercurySafe: '-10 μg/L',
-      waterLevel: 98,
-    ),
-  ];
-
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  List<DeviceData> _devices = [];
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    // Show skeleton only on cold cache; warm cache loads silently in background.
+    _isLoading = !ApiService.isCacheValid('devices');
+    _loadDevices(showSkeleton: _isLoading);
+  }
+
+  Future<void> _loadDevices({bool showSkeleton = false}) async {
+    if (showSkeleton) setState(() { _isLoading = true; _error = null; });
+    try {
+      final rawDevices = await ApiService.getDevices();
+
+      // Fetch IoT status and sensor data for each device in parallel
+      final List<DeviceData> loaded = [];
+      for (final d in rawDevices) {
+        final deviceId = d['id'] as int? ?? 0;
+        final deviceKey = d['device_key'] as String? ?? '';
+        final deviceName = d['name'] as String? ?? 'Device';
+        final location = d['location'] as String? ?? '';
+
+        // Online status
+        bool isOnline = false;
+        try {
+          final status = await ApiService.getDeviceStatus(deviceKey);
+          isOnline = status['is_online'] as bool? ?? false;
+        } catch (_) {}
+
+        // Sensor data + contaminants in a single call
+        Map<String, dynamic>? deviceData;
+        try {
+          deviceData = await ApiService.getLatestSensorDataByDevice(deviceId);
+        } catch (_) {}
+
+        final sensorData =
+            deviceData?['sensor_data'] as Map<String, dynamic>?;
+        final contaminants =
+            deviceData?['contaminants'] as Map<String, dynamic>?;
+
+        final purificationStatus =
+            sensorData?['purification_status'] as String? ?? '';
+        final isHealthy = purificationStatus == 'safe';
+
+        // This PCB's ion-selective electrodes report chlorine/nitrate (among
+        // others) via contaminant_readings. WHO limits: chlorine <= 5 mg/L,
+        // nitrate <= 50 mg/L (matches purification-aws backend seed data).
+        final chlorineMgL = (contaminants?['chlorine'] as num?)?.toDouble();
+        final nitrateMgL = (contaminants?['nitrate'] as num?)?.toDouble();
+
+        final phLevel = sensorData?['ph_level'];
+        final tdsLevel = sensorData?['tds_level'];
+        final waterLevelPct =
+            (sensorData?['water_level_percentage'] as num?)?.toInt() ?? 0;
+
+        loaded.add(DeviceData(
+          id: deviceId,
+          deviceKey: deviceKey,
+          name: location.isNotEmpty ? '$deviceName, $location' : deviceName,
+          status: isOnline ? 'Online' : 'Offline',
+          statusColor: isOnline
+              ? const Color(0xFF51CF66)
+              : const Color(0xFFAAAAAA),
+          healthStatus: isHealthy ? 'Healthy' : 'Not Healthy',
+          healthColor: isHealthy
+              ? const Color(0xFF51CF66)
+              : const Color(0xFFFF6B6B),
+          incomingWaterLead: chlorineMgL != null
+              ? '${chlorineMgL.toStringAsFixed(2)} mg/L'
+              : 'N/A',
+          incomingWaterLeadSafe:
+              chlorineMgL != null && chlorineMgL > 5.0 ? 'UNSAFE' : '',
+          incomingWaterMercury: nitrateMgL != null
+              ? '${nitrateMgL.toStringAsFixed(2)} mg/L'
+              : 'N/A',
+          incomingWaterMercurySafe:
+              nitrateMgL != null && nitrateMgL > 50.0 ? 'UNSAFE' : '',
+          outgoingWaterLead:
+              phLevel != null ? '$phLevel pH' : 'N/A',
+          outgoingWaterLeadSafe: '',
+          outgoingWaterMercury:
+              tdsLevel != null ? '$tdsLevel TDS' : 'N/A',
+          outgoingWaterMercurySafe: '',
+          waterLevel: waterLevelPct,
+        ));
+      }
+
+      if (mounted) setState(() { _devices = loaded; _isLoading = false; });
+    } catch (e) {
+      if (mounted) {
+        if (showSkeleton) {
+          setState(() { _error = e.toString(); _isLoading = false; });
+        } else {
+          // Silent background refresh failed — keep existing data, stop spinner.
+          setState(() => _isLoading = false);
+        }
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: const Color(0xFFF5F5F5),
-      appBar: CommonAppBar(scaffoldKey: _scaffoldKey),
-      drawer: CommonDrawer(scaffoldKey: _scaffoldKey, currentRoute: '/home'),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: devices.length,
-        itemBuilder: (context, index) {
-          return DeviceCard(device: devices[index]);
-        },
+      appBar: CommonAppBar(
+        scaffoldKey: _scaffoldKey,
+        onDeviceAdded: () => _loadDevices(showSkeleton: true),
       ),
+      drawer: CommonDrawer(scaffoldKey: _scaffoldKey, currentRoute: '/home'),
+      body: _isLoading
+          ? ListView(
+              padding: const EdgeInsets.all(16),
+              children: const [DeviceCardSkeleton(), DeviceCardSkeleton()],
+            )
+          : _error != null
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.error_outline,
+                          color: Color(0xFFFF6B6B), size: 48),
+                      const SizedBox(height: 12),
+                      Text(_error!,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                              color: Color(0xFF666666), fontFamily: 'Inter')),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () => _loadDevices(showSkeleton: true),
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF0052cc)),
+                        child: const Text('Retry',
+                            style: TextStyle(color: Colors.white)),
+                      ),
+                    ],
+                  ),
+                )
+              : _devices.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Icon(Icons.devices_other,
+                              color: Color(0xFFCCCCCC), size: 64),
+                          SizedBox(height: 16),
+                          Text(
+                            'No devices found',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF666666),
+                              fontFamily: 'Inter',
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'Add a device to get started',
+                            style: TextStyle(
+                                fontSize: 13,
+                                color: Color(0xFFAAAAAA),
+                                fontFamily: 'Inter'),
+                          ),
+                        ],
+                      ),
+                    )
+                  : RefreshIndicator(
+                      onRefresh: () async {
+                        // Invalidate device cache so pull-to-refresh fetches fresh data.
+                        ApiService.invalidate('devices');
+                        for (final d in _devices) {
+                          ApiService.invalidate('iot_status_${d.deviceKey}');
+                          ApiService.invalidate('sensor_device_${d.id}');
+                        }
+                        await _loadDevices(showSkeleton: false);
+                      },
+                      color: const Color(0xFF0052cc),
+                      child: ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: _devices.length,
+                        itemBuilder: (context, index) {
+                          return DeviceCard(device: _devices[index]);
+                        },
+                      ),
+                    ),
     );
   }
 }
@@ -78,14 +216,6 @@ class DeviceCard extends StatefulWidget {
 }
 
 class _DeviceCardState extends State<DeviceCard> {
-  late bool pumpOn;
-
-  @override
-  void initState() {
-    super.initState();
-    pumpOn = widget.device.pumpOn;
-  }
-
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -187,45 +317,44 @@ class _DeviceCardState extends State<DeviceCard> {
               const SizedBox(height: 12),
               const Divider(height: 1, color: Color(0xFFEEEEEE)),
               const SizedBox(height: 12),
-              // Pump control
+              // Pump control — not implemented by this device's current
+              // firmware (Firmware.md has no relay/pump driver code), shown
+              // disabled rather than sending a command the device ignores.
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        pumpOn ? 'Turn ON the pump' : 'Turn OFF the pump',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF14103B),
-                          fontFamily: 'Inter',
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Pump control',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFFAAAAAA),
+                            fontFamily: 'Inter',
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 2),
-                      const Text(
-                        'Press to manually turn off the pump',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFFAAAAAA),
-                          fontFamily: 'Inter',
+                        const SizedBox(height: 2),
+                        const Text(
+                          'Not supported by this device\'s current firmware',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFFAAAAAA),
+                            fontFamily: 'Inter',
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                   Transform.scale(
                     scale: 0.85,
-                    child: Switch(
-                      value: pumpOn,
-                      onChanged: (value) {
-                        setState(() {
-                          pumpOn = value;
-                        });
-                      },
-                      activeColor: const Color(0xFF51CF66),
-                      inactiveThumbColor: const Color(0xFFDDDDDD),
-                      inactiveTrackColor: const Color(0xFFEEEEEE),
+                    child: const Switch(
+                      value: false,
+                      onChanged: null,
+                      inactiveThumbColor: Color(0xFFDDDDDD),
+                      inactiveTrackColor: Color(0xFFEEEEEE),
                     ),
                   ),
                 ],
@@ -252,13 +381,13 @@ class _DeviceCardState extends State<DeviceCard> {
                         ),
                         const SizedBox(height: 6),
                         _buildWaterQualityRow(
-                          'Lead (Pb²⁺)',
+                          'Chlorine',
                           widget.device.incomingWaterLead,
                           widget.device.incomingWaterLeadSafe,
                         ),
                         const SizedBox(height: 4),
                         _buildWaterQualityRow(
-                          'Mercury (Hg²⁺)',
+                          'Nitrate (NO3⁻)',
                           widget.device.incomingWaterMercury,
                           widget.device.incomingWaterMercurySafe,
                         ),
@@ -274,13 +403,13 @@ class _DeviceCardState extends State<DeviceCard> {
                         ),
                         const SizedBox(height: 6),
                         _buildWaterQualityRow(
-                          'Lead (Pb²⁺)',
+                          'pH Level',
                           widget.device.outgoingWaterLead,
                           widget.device.outgoingWaterLeadSafe,
                         ),
                         const SizedBox(height: 4),
                         _buildWaterQualityRow(
-                          'Mercury (Hg²⁺)',
+                          'TDS Level',
                           widget.device.outgoingWaterMercury,
                           widget.device.outgoingWaterMercurySafe,
                         ),
@@ -669,12 +798,13 @@ class WaterTankPainter extends CustomPainter {
 }
 
 class DeviceData {
+  final int id;
+  final String deviceKey;
   final String name;
   final String status;
   final Color statusColor;
   final String healthStatus;
   final Color healthColor;
-  final bool pumpOn;
   final String incomingWaterLead;
   final String incomingWaterLeadSafe;
   final String incomingWaterMercury;
@@ -686,12 +816,13 @@ class DeviceData {
   final int waterLevel;
 
   DeviceData({
+    this.id = 0,
+    this.deviceKey = '',
     required this.name,
     required this.status,
     required this.statusColor,
     required this.healthStatus,
     required this.healthColor,
-    required this.pumpOn,
     required this.incomingWaterLead,
     required this.incomingWaterLeadSafe,
     required this.incomingWaterMercury,

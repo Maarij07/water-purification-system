@@ -15,8 +15,8 @@ class _ReportFilterScreenState extends State<ReportFilterScreen> {
     'Total consumption': true,
     'Average daily usage': true,
     'Peak usage times': true,
-    'Lead level': false,
-    'Mercury level': false,
+    'Chlorine level': false,
+    'Nitrate level': false,
     'Primary contaminants': false,
     'Secondary contaminants': false,
   };
@@ -26,7 +26,7 @@ class _ReportFilterScreenState extends State<ReportFilterScreen> {
     final isFluidsUsage = widget.filterType == 'fluid_usage';
     final dataPointsToShow = isFluidsUsage
         ? ['Total consumption', 'Average daily usage', 'Peak usage times']
-        : ['Lead level', 'Mercury level', 'Primary contaminants', 'Secondary contaminants'];
+        : ['Chlorine level', 'Nitrate level', 'Primary contaminants', 'Secondary contaminants'];
 
     return Scaffold(
       backgroundColor: Colors.white,

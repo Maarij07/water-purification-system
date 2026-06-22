@@ -34,7 +34,7 @@ class _OnboardScreenState extends State<OnboardScreen> {
       image: 'assets/onboard_4.png',
       title: 'Contaminant Check Steps',
       description:
-          'Monitor your water quality with Qiphlow! Use the \'Contaminant Check\' option to view Lead and Mercury levels in real-time. The app will alert you if contaminants exceed safe thresholds, helping you maintain water safety.',
+          'Monitor your water quality with Qiphlow! Use the \'Contaminant Check\' option to view Chlorine, Nitrate, Calcium, Sodium, Potassium, Ammonium, and Magnesium levels in real-time. The app will alert you if contaminants exceed safe thresholds, helping you maintain water safety.',
     ),
     OnboardData(
       image: 'assets/onboard_5.png',

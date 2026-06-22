@@ -3,6 +3,7 @@ import '../tutorials/device_installation_screen.dart';
 import '../tutorials/connect_device_screen.dart';
 import '../tutorials/calibration_screen.dart';
 import '../tutorials/network_connection_screen.dart';
+import 'add_device_screen.dart';
 
 class DeviceManagementScreen extends StatefulWidget {
   const DeviceManagementScreen({Key? key}) : super(key: key);
@@ -99,6 +100,70 @@ class _DeviceManagementScreenState extends State<DeviceManagementScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Add Device — registers the device with the backend
+                    GestureDetector(
+                      onTap: () async {
+                        final added = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const AddDeviceScreen(),
+                          ),
+                        );
+                        if (added == true && context.mounted) {
+                          Navigator.pop(context, true);
+                        }
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF001a4d),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.15),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.add,
+                                  color: Colors.white, size: 20),
+                            ),
+                            const SizedBox(width: 12),
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Add device',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
+                                      fontFamily: 'Inter',
+                                    ),
+                                  ),
+                                  SizedBox(height: 2),
+                                  Text(
+                                    'Register a device using its device key',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFFB0C4FF),
+                                      fontFamily: 'Inter',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Icon(Icons.chevron_right,
+                                color: Colors.white, size: 20),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
                     // Device Installation
                     _buildTutorialCard(
                       context,

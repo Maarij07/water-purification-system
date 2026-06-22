@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../widgets/common_drawer.dart';
+import '../../widgets/shimmer_widget.dart';
+import '../../services/api_service.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'report_filter_screen.dart';
 
@@ -11,7 +13,154 @@ class ReportsScreen extends StatefulWidget {
 }
 
 class _ReportsScreenState extends State<ReportsScreen> {
-  int _activeTab = 0; // 0 for Fluid Usage, 1 for Fluid Impurity
+  int _activeTab = 0;
+
+  // Summary stats
+  double _totalConsumption = 0;
+  double _avgConsumption = 0;
+  Map<String, double> _contaminantMinByType = {};
+  Map<String, double> _contaminantMaxByType = {};
+  bool _statsLoading = true;
+
+  // Chart data (populated from API period data when available)
+  List<double> _usageBars = [];
+  List<String> _usageLabels = [];
+  double _usageMaxY = 40;
+
+  List<double> _impurityPrimaryBars = [];
+  List<double> _impuritySecondaryBars = [];
+  double _impurityMaxY = 40;
+
+  String _chartPeriodLabel = '';
+
+  static String _monthName(int m) => const [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+      ][m - 1];
+
+  @override
+  void initState() {
+    super.initState();
+    final now = DateTime.now();
+    _chartPeriodLabel = '${_monthName(now.month)} ${now.year}';
+    // 'water_consumption__' is the key with no date filters.
+    final hasCached = ApiService.isCacheValid('water_consumption__') &&
+        ApiService.isCacheValid('contaminant_trends');
+    _statsLoading = !hasCached;
+    _loadAnalytics();
+  }
+
+  Future<void> _loadAnalytics() async {
+    try {
+      final results = await Future.wait([
+        ApiService.getWaterConsumption(),
+        ApiService.getContaminantTrends(),
+      ]);
+      final consumption = results[0];
+      final contaminants = results[1];
+
+      final summary = consumption['summary'] as Map<String, dynamic>? ?? {};
+      // One summary row per contaminant_type (chlorine, nitrate, calcium, ...) —
+      // index by type so each stat card shows its own min/max, not a shared value.
+      final contaminantSummaryList = (contaminants['summary'] as List?) ?? [];
+      final minByType = <String, double>{};
+      final maxByType = <String, double>{};
+      for (final item in contaminantSummaryList) {
+        if (item is Map) {
+          final type = item['contaminant_type'] as String?;
+          if (type == null) continue;
+          minByType[type] = (item['min_level'] as num?)?.toDouble() ?? 0;
+          maxByType[type] = (item['max_level'] as num?)?.toDouble() ?? 0;
+        }
+      }
+
+      // ── Fluid Usage chart bars ──────────────────────────────────────────
+      // The API may return period data under 'data', 'daily', or 'periods'.
+      final rawUsage = (consumption['data'] as List<dynamic>?) ??
+          (consumption['daily'] as List<dynamic>?) ??
+          (consumption['periods'] as List<dynamic>?) ??
+          [];
+
+      final List<double> usageBars = rawUsage.take(5).map((d) {
+        if (d is Map) {
+          return ((d['amount'] as num?) ??
+                  (d['consumption'] as num?) ??
+                  (d['total'] as num?) ??
+                  0)
+              .toDouble();
+        }
+        return 0.0;
+      }).toList();
+
+      final List<String> usageLabels = rawUsage.take(5).map((d) {
+        if (d is Map) {
+          final date = d['date'] as String? ?? d['period'] as String? ?? '';
+          if (date.length >= 10) return date.substring(8, 10); // DD from YYYY-MM-DD
+        }
+        return '';
+      }).toList();
+
+      final double usageMax = usageBars.isNotEmpty
+          ? usageBars.reduce((a, b) => a > b ? a : b)
+          : _avgConsumption;
+      final double usageMaxY =
+          usageMax > 0 ? ((usageMax * 1.3) / 10).ceil() * 10.0 : 40;
+
+      // ── Fluid Impurity chart bars ───────────────────────────────────────
+      final rawTrend = (contaminants['data'] as List<dynamic>?) ??
+          (contaminants['trends'] as List<dynamic>?) ??
+          (contaminants['periods'] as List<dynamic>?) ??
+          [];
+
+      // Primary = TDS (scaled /10 to fit chart), Secondary = pH (scaled *4)
+      final List<double> impPrimary = rawTrend.take(5).map((d) {
+        if (d is Map) {
+          return ((d['tds_level'] as num?) ?? 0).toDouble() / 10;
+        }
+        return 0.0;
+      }).toList();
+
+      final List<double> impSecondary = rawTrend.take(5).map((d) {
+        if (d is Map) {
+          return ((d['ph_level'] as num?) ?? 0).toDouble() * 4;
+        }
+        return 0.0;
+      }).toList();
+
+      final allImpurity = [...impPrimary, ...impSecondary];
+      final double impMax = allImpurity.isNotEmpty
+          ? allImpurity.reduce((a, b) => a > b ? a : b)
+          : 40;
+      final double impMaxY =
+          impMax > 0 ? ((impMax * 1.3) / 10).ceil() * 10.0 : 40;
+
+      if (mounted) {
+        setState(() {
+          _totalConsumption =
+              (summary['total_consumption'] as num?)?.toDouble() ?? 0;
+          _avgConsumption =
+              (summary['avg_consumption'] as num?)?.toDouble() ?? 0;
+          _contaminantMinByType = minByType;
+          _contaminantMaxByType = maxByType;
+          _usageBars = usageBars;
+          _usageLabels = usageLabels;
+          _usageMaxY = usageMaxY;
+          _impurityPrimaryBars = impPrimary;
+          _impuritySecondaryBars = impSecondary;
+          _impurityMaxY = impMaxY;
+          _statsLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _statsLoading = false);
+    }
+  }
+
+  String _contaminantStat(Map<String, double> byType, String type) {
+    if (_statsLoading) return '...';
+    final v = byType[type];
+    return v != null ? '${v.toStringAsFixed(2)} mg/L' : '—';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -185,15 +334,17 @@ class _ReportsScreenState extends State<ReportsScreen> {
                       fontFamily: 'Inter',
                     ),
                   ),
-                  const Text(
-                    '251 L',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF14103B),
-                      fontFamily: 'Inter',
-                    ),
-                  ),
+                  _statsLoading
+                      ? const ShimmerBox(width: 70, height: 14, radius: 4)
+                      : Text(
+                          '${_totalConsumption.toStringAsFixed(1)} L',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF14103B),
+                            fontFamily: 'Inter',
+                          ),
+                        ),
                 ],
               ),
               const SizedBox(height: 12),
@@ -208,15 +359,17 @@ class _ReportsScreenState extends State<ReportsScreen> {
                       fontFamily: 'Inter',
                     ),
                   ),
-                  const Text(
-                    '5 L',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF14103B),
-                      fontFamily: 'Inter',
-                    ),
-                  ),
+                  _statsLoading
+                      ? const ShimmerBox(width: 70, height: 14, radius: 4)
+                      : Text(
+                          '${_avgConsumption.toStringAsFixed(1)} L',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF14103B),
+                            fontFamily: 'Inter',
+                          ),
+                        ),
                 ],
               ),
               const SizedBox(height: 12),
@@ -232,7 +385,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                     ),
                   ),
                   const Text(
-                    '18:00',
+                    '—',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
@@ -321,26 +474,26 @@ class _ReportsScreenState extends State<ReportsScreen> {
         ),
         const SizedBox(height: 12),
         // Primary chart card
-        _buildChartCard(),
+        _buildChartCard(isFluidImpurity: true),
         const SizedBox(height: 16),
-        // Lead stats
+        // Chlorine stats (WHO limit: 5 mg/L)
         _buildContaminantStats(
-          title: 'Lead (Pb²⁺)',
+          title: 'Chlorine',
           color: const Color(0xFF0052cc),
-          minLabel: 'Min level (13.01.2025)',
-          minValue: '50 μg/L',
-          maxLabel: 'Max level (25.01.2025)',
-          maxValue: '2500 μg/L',
+          minLabel: 'Min level',
+          minValue: _contaminantStat(_contaminantMinByType, 'chlorine'),
+          maxLabel: 'Max level',
+          maxValue: _contaminantStat(_contaminantMaxByType, 'chlorine'),
         ),
         const SizedBox(height: 16),
-        // Mercury stats
+        // Nitrate stats (WHO limit: 50 mg/L)
         _buildContaminantStats(
-          title: 'Mercury (Hg²⁺)',
+          title: 'Nitrate (NO3⁻)',
           color: const Color(0xFF6B9FFF),
-          minLabel: 'Min level (10.01.2025)',
-          minValue: '15 μg/L',
-          maxLabel: 'Max level (16.01.2025)',
-          maxValue: '3556 μg/L',
+          minLabel: 'Min level',
+          minValue: _contaminantStat(_contaminantMinByType, 'nitrate'),
+          maxLabel: 'Max level',
+          maxValue: _contaminantStat(_contaminantMaxByType, 'nitrate'),
         ),
         const SizedBox(height: 28),
         // Secondary Contaminant Monitoring
@@ -355,26 +508,26 @@ class _ReportsScreenState extends State<ReportsScreen> {
         ),
         const SizedBox(height: 12),
         // Secondary chart card
-        _buildChartCard(),
+        _buildChartCard(isFluidImpurity: true),
         const SizedBox(height: 16),
-        // Lead stats (secondary)
+        // Calcium stats (informational — no WHO limit)
         _buildContaminantStats(
-          title: 'Lead (Pb²⁺)',
+          title: 'Calcium (Ca²⁺)',
           color: const Color(0xFF0052cc),
-          minLabel: 'Min level (13.01.2025)',
-          minValue: '50 μg/L',
-          maxLabel: 'Max level (25.01.2025)',
-          maxValue: '2500 μg/L',
+          minLabel: 'Min level',
+          minValue: _contaminantStat(_contaminantMinByType, 'calcium'),
+          maxLabel: 'Max level',
+          maxValue: _contaminantStat(_contaminantMaxByType, 'calcium'),
         ),
         const SizedBox(height: 16),
-        // Mercury stats (secondary)
+        // Sodium stats (informational — no WHO limit)
         _buildContaminantStats(
-          title: 'Mercury (Hg²⁺)',
+          title: 'Sodium (Na⁺)',
           color: const Color(0xFF6B9FFF),
-          minLabel: 'Min level (10.01.2025)',
-          minValue: '15 μg/L',
-          maxLabel: 'Max level (16.01.2025)',
-          maxValue: '3556 μg/L',
+          minLabel: 'Min level',
+          minValue: _contaminantStat(_contaminantMinByType, 'sodium'),
+          maxLabel: 'Max level',
+          maxValue: _contaminantStat(_contaminantMaxByType, 'sodium'),
         ),
         const SizedBox(height: 24),
         // Export report button
@@ -407,185 +560,161 @@ class _ReportsScreenState extends State<ReportsScreen> {
     );
   }
 
-  Widget _buildChartCard() {
+  Widget _buildChartCard({bool isFluidImpurity = false}) {
+    final maxY = isFluidImpurity ? _impurityMaxY : _usageMaxY;
+    final bars = isFluidImpurity
+        ? _buildFluidImpurityBarGroups()
+        : _buildFluidUsageBarGroups();
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: const Color(0xFFEEEEEE),
-          width: 1,
-        ),
+        border: Border.all(color: const Color(0xFFEEEEEE), width: 1),
       ),
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          // Month navigation
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              IconButton(
-                icon: const Icon(Icons.chevron_left, color: Color(0xFFCCCCCC)),
-                onPressed: () {},
-              ),
-              const Text(
-                'January 2025',
-                style: TextStyle(
+              const Icon(Icons.chevron_left, color: Color(0xFFCCCCCC)),
+              Text(
+                _chartPeriodLabel,
+                style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
                   color: Color(0xFF14103B),
                   fontFamily: 'Inter',
                 ),
               ),
-              IconButton(
-                icon: const Icon(Icons.chevron_right, color: Color(0xFFCCCCCC)),
-                onPressed: () {},
-              ),
+              const Icon(Icons.chevron_right, color: Color(0xFFCCCCCC)),
             ],
           ),
           const SizedBox(height: 16),
-          // Bar chart
-          SizedBox(
-            height: 200,
-            child: BarChart(
-              BarChartData(
-                alignment: BarChartAlignment.spaceAround,
-                maxY: 40,
-                barTouchData: BarTouchData(enabled: false),
-                titlesData: FlTitlesData(
-                  show: true,
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      getTitlesWidget: (value, meta) {
-                        const titles = ['1', '8', '15', '22', '31'];
-                        if (value.toInt() < titles.length) {
-                          return Text(
-                            titles[value.toInt()],
-                            style: const TextStyle(
-                              color: Color(0xFFCCCCCC),
-                              fontSize: 11,
-                              fontFamily: 'Inter',
-                            ),
-                          );
-                        }
-                        return const Text('');
-                      },
-                    ),
-                  ),
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      getTitlesWidget: (value, meta) {
-                        return Text(
-                          '${value.toInt()}',
-                          style: const TextStyle(
-                            color: Color(0xFFCCCCCC),
-                            fontSize: 10,
-                            fontFamily: 'Inter',
-                          ),
-                        );
-                      },
-                      reservedSize: 30,
-                    ),
-                  ),
-                  topTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  rightTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
+          if (bars.isEmpty && !_statsLoading)
+            const SizedBox(
+              height: 80,
+              child: Center(
+                child: Text(
+                  'No chart data available for this period',
+                  style: TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFFAAAAAA),
+                      fontFamily: 'Inter'),
                 ),
-                gridData: FlGridData(
-                  show: true,
-                  drawVerticalLine: false,
-                  horizontalInterval: 10,
-                  getDrawingHorizontalLine: (value) {
-                    return FlLine(
-                      color: const Color(0xFFEEEEEE),
-                      strokeWidth: 1,
-                    );
-                  },
-                ),
-                borderData: FlBorderData(show: false),
-                barGroups: [
-                  BarChartGroupData(
-                    x: 0,
-                    barRods: [
-                      BarChartRodData(
-                        toY: 20,
-                        color: const Color(0xFF51CF66),
-                        width: 8,
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(4),
-                          topRight: Radius.circular(4),
-                        ),
-                      ),
-                    ],
-                  ),
-                  BarChartGroupData(
-                    x: 1,
-                    barRods: [
-                      BarChartRodData(
-                        toY: 38,
-                        color: const Color(0xFF51CF66),
-                        width: 8,
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(4),
-                          topRight: Radius.circular(4),
-                        ),
-                      ),
-                    ],
-                  ),
-                  BarChartGroupData(
-                    x: 2,
-                    barRods: [
-                      BarChartRodData(
-                        toY: 27,
-                        color: const Color(0xFF51CF66),
-                        width: 8,
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(4),
-                          topRight: Radius.circular(4),
-                        ),
-                      ),
-                    ],
-                  ),
-                  BarChartGroupData(
-                    x: 3,
-                    barRods: [
-                      BarChartRodData(
-                        toY: 24,
-                        color: const Color(0xFF51CF66),
-                        width: 8,
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(4),
-                          topRight: Radius.circular(4),
-                        ),
-                      ),
-                    ],
-                  ),
-                  BarChartGroupData(
-                    x: 4,
-                    barRods: [
-                      BarChartRodData(
-                        toY: 18,
-                        color: const Color(0xFF51CF66),
-                        width: 8,
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(4),
-                          topRight: Radius.circular(4),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
               ),
+            )
+          else
+            SizedBox(
+              height: 200,
+              child: _statsLoading
+                  ? const ShimmerBox(
+                      width: double.infinity, height: 200, radius: 8)
+                  : BarChart(
+                      BarChartData(
+                        alignment: BarChartAlignment.spaceAround,
+                        maxY: maxY,
+                        barTouchData: BarTouchData(enabled: false),
+                        titlesData: FlTitlesData(
+                          show: true,
+                          bottomTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              getTitlesWidget: (value, meta) {
+                                final idx = value.toInt();
+                                final label = idx < _usageLabels.length
+                                    ? _usageLabels[idx]
+                                    : '${idx + 1}';
+                                return Text(label,
+                                    style: const TextStyle(
+                                        color: Color(0xFFCCCCCC),
+                                        fontSize: 11,
+                                        fontFamily: 'Inter'));
+                              },
+                            ),
+                          ),
+                          leftTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              getTitlesWidget: (value, meta) => Text(
+                                '${value.toInt()}',
+                                style: const TextStyle(
+                                    color: Color(0xFFCCCCCC),
+                                    fontSize: 10,
+                                    fontFamily: 'Inter'),
+                              ),
+                              reservedSize: 30,
+                            ),
+                          ),
+                          topTitles: const AxisTitles(
+                              sideTitles: SideTitles(showTitles: false)),
+                          rightTitles: const AxisTitles(
+                              sideTitles: SideTitles(showTitles: false)),
+                        ),
+                        gridData: FlGridData(
+                          show: true,
+                          drawVerticalLine: false,
+                          horizontalInterval: maxY / 4,
+                          getDrawingHorizontalLine: (_) => const FlLine(
+                              color: Color(0xFFEEEEEE), strokeWidth: 1),
+                        ),
+                        borderData: FlBorderData(show: false),
+                        barGroups: bars,
+                      ),
+                    ),
             ),
-          ),
         ],
       ),
     );
+  }
+
+  static const _barRadius = BorderRadius.only(
+    topLeft: Radius.circular(4),
+    topRight: Radius.circular(4),
+  );
+
+  List<BarChartGroupData> _buildFluidUsageBarGroups() {
+    if (_usageBars.isEmpty) return [];
+    return List.generate(_usageBars.length, (i) {
+      return BarChartGroupData(
+        x: i,
+        barRods: [
+          BarChartRodData(
+            toY: _usageBars[i],
+            color: const Color(0xFF207C08),
+            width: 8,
+            borderRadius: _barRadius,
+          ),
+        ],
+      );
+    });
+  }
+
+  List<BarChartGroupData> _buildFluidImpurityBarGroups() {
+    if (_impurityPrimaryBars.isEmpty) return [];
+    final count = _impurityPrimaryBars.length;
+    return List.generate(count, (i) {
+      return BarChartGroupData(
+        x: i,
+        barRods: [
+          BarChartRodData(
+            toY: i < _impurityPrimaryBars.length ? _impurityPrimaryBars[i] : 0,
+            color: const Color(0xFF0B2A69),
+            width: 6,
+            borderRadius: _barRadius,
+          ),
+          BarChartRodData(
+            toY: i < _impuritySecondaryBars.length
+                ? _impuritySecondaryBars[i]
+                : 0,
+            color: const Color(0xFFAACDF6),
+            width: 6,
+            borderRadius: _barRadius,
+          ),
+        ],
+      );
+    });
   }
 
   Widget _buildContaminantStats({
@@ -767,7 +896,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                             ),
                           ),
                           const Text(
-                            'Lead (Pb²⁺), Mercury (Hg²⁺)',
+                            'Chlorine, Nitrate, Calcium, Sodium',
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,

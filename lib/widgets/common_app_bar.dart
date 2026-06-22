@@ -5,8 +5,14 @@ import '../screens/home/device_management_screen.dart';
 class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
   final GlobalKey<ScaffoldState> scaffoldKey;
   final String? screenName;
+  final VoidCallback? onDeviceAdded;
 
-  const CommonAppBar({Key? key, required this.scaffoldKey, this.screenName}) : super(key: key);
+  const CommonAppBar({
+    Key? key,
+    required this.scaffoldKey,
+    this.screenName,
+    this.onDeviceAdded,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -44,13 +50,14 @@ class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
           ),
           child: IconButton(
             icon: const Icon(Icons.add, color: Color(0xFF0052cc), size: 24),
-            onPressed: () {
-              Navigator.push(
+            onPressed: () async {
+              final result = await Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => const DeviceManagementScreen(),
                 ),
               );
+              if (result == true) onDeviceAdded?.call();
             },
             padding: const EdgeInsets.all(8),
             constraints: const BoxConstraints(),
